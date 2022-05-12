@@ -15,7 +15,7 @@ python run.py \
 	--do_train \
 	--do_eval \
 	--model_type roberta \
-	--model_name_or_path microsoft/codebert-base \
+	--model_name_or_path /home/arminz/codebert-base \
 	--config_name roberta-base \
 	--tokenizer_name roberta-base \
 	--train_filename ../data/small/train.buggy-fixed.buggy,../data/small/train.buggy-fixed.fixed \
