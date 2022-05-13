@@ -82,7 +82,7 @@ class Example(object):
 #                         ) 
 #             )
 #     return examples
-def read_examples(data_dir, split, domain):
+def read_examples(data_dir, split, domain, repo=None):
     """Read examples from filename."""
     examples = []
     idx = 0
@@ -95,8 +95,11 @@ def read_examples(data_dir, split, domain):
         csv_reader_fixed = csv.reader(f2, delimiter=',')
         csv_reader_splits = csv.reader(f3, delimiter=',')
         for line1, line2, line3 in zip(csv_reader_buggy, csv_reader_fixed, csv_reader_splits):
+            if repo and not (line1[3] == repo):
+                continue
             if line3[2] != split:
                 continue
+            target_domain = (line3[1] == 'True')
             if domain == 'target' and not target_domain:
                 continue
             if domain == 'source' and target_domain:
@@ -116,7 +119,7 @@ def read_examples(data_dir, split, domain):
                 )
             )
             idx += 1
-    logger.info('read examples for {} : #{}'.format(split, len(examples)))
+    logger.info('read examples for {} {} {}: #{}'.format(split, target_domain, repo, len(examples)))
     return examples
 
 
@@ -291,11 +294,24 @@ def main():
                         help="For distributed training: local_rank")
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
+
+    parser.add_argument('--domain', type=str, choices=['source', 'target'], required=True,
+                        help="the domain of train or test")
+    parser.add_argument('--repo', type=str, required=False,
+                        help="the repo if data is limited to one")
     # print arguments
     args = parser.parse_args()
     logger.info(args)
 
     data_dir = args.data_dir
+    domain = args.domain
+    repo = args.repo
+
+    logger.info('********** arguments **********')
+    logger.info(f'data_dir : {data_dir}')
+    logger.info(f'domain : {domain}')
+    logger.info(f'repo : {repo}')
+    logger.info('********** arguments **********')
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
@@ -347,7 +363,7 @@ def main():
 
     if args.do_train:
         # Prepare training data loader
-        train_examples = read_examples(data_dir, 'train', 'source') # train_filename
+        train_examples = read_examples(data_dir, 'train', domain, repo)  # train_filename
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
         all_source_ids = torch.tensor([f.source_ids for f in train_features], dtype=torch.long)
         all_source_mask = torch.tensor([f.source_mask for f in train_features], dtype=torch.long)
@@ -422,7 +438,7 @@ def main():
                 if 'dev_loss' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', 'source') #args.dev_filename
+                    eval_examples = read_examples(data_dir, 'val', domain, repo)  # args.dev_filename
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='dev')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
                     all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -482,7 +498,7 @@ def main():
                 if 'dev_bleu' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_bleu']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', 'source') #args.dev_filename
+                    eval_examples = read_examples(data_dir, 'val', domain, repo)  # args.dev_filename
                     eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
@@ -543,7 +559,8 @@ def main():
         #     files.append(args.test_filename)
         for idx, file in enumerate(['all']):
             logger.info("Test file: {}".format(file))
-            eval_examples = read_examples(data_dir, 'test', 'target') #args.dev_filename
+            assert domain == 'target'
+            eval_examples = read_examples(data_dir, 'test', domain, repo)  # args.dev_filename
             eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
             all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
             all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -588,6 +605,7 @@ def main():
                 f.write("  %s = %s " % ("bleu-4", str(dev_bleu)))
                 f.write("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
                 f.write("  " + "*" * 20)
+
 
 if __name__ == "__main__":
     main()

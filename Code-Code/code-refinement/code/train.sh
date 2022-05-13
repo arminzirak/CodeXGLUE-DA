@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --gres=gpu:v100l:1
-#SBATCH --job-name=XTss # single job name for the array
+#SBATCH --job-name=XtrainS # single job name for the array
 #SBATCH --time=60:00:00 # maximum walltime per job
 #SBATCH --mem=25G # maximum 100M per job
 #SBATCH --cpus-per-task=2
@@ -27,4 +27,5 @@ python run.py \
 	--eval_batch_size 32 \
 	--learning_rate 5e-5 \
 	--train_steps 100000 \
-	--eval_steps 5000
+	--eval_steps 5000 \
+	--domain source \
