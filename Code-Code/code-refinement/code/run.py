@@ -557,7 +557,7 @@ def main():
         #     files.append(args.dev_filename)
         # if args.test_filename is not None:
         #     files.append(args.test_filename)
-        for idx, file in enumerate(['all']):
+        for idx, file in enumerate(['NA']):
             logger.info("Test file: {}".format(file))
             assert domain == 'target'
             eval_examples = read_examples(data_dir, 'test', domain, repo)  # args.dev_filename
