@@ -32,6 +32,6 @@ do
     --learning_rate 5e-5 \
     --train_steps 600 \
     --eval_steps 150 \
-    --domain target \
+    --domains target \
     --repo $repo
 done

@@ -13,7 +13,7 @@ source env/bin/activate
 
 python run.py \
 	--do_test \
-	--output_dir ~/scratch/Xoutputs/adapted/all \
+	--output_dir ~/scratch/Xoutputs/adapted/all/ \
 	--load_model_path ./output/checkpoint-best-ppl/pytorch_model.bin \
 	--model_type roberta \
 	--model_name_or_path microsoft/codebert-base \
@@ -24,4 +24,4 @@ python run.py \
 	--max_target_length 256 \
 	--beam_size 5 \
 	--eval_batch_size 32 \
-	--domain target
+	--domains target

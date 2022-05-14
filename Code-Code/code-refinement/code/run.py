@@ -41,6 +41,7 @@ from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
 
 import csv
+from datetime import datetime
 
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
@@ -82,7 +83,7 @@ class Example(object):
 #                         ) 
 #             )
 #     return examples
-def read_examples(data_dir, split, domain, repo=None):
+def read_examples(data_dir, split, domains, repo=None):
     """Read examples from filename."""
     examples = []
     idx = 0
@@ -100,9 +101,9 @@ def read_examples(data_dir, split, domain, repo=None):
             if line3[2] != split:
                 continue
             target_domain = (line3[1] == 'True')
-            if domain == 'target' and not target_domain:
+            if not ('source' in domains) and not target_domain:
                 continue
-            if domain == 'source' and target_domain:
+            if not ('target' in domains) and target_domain:
                 continue
             assert line1[0] == line2[0] == line3[0]
             assert line1[2] == line2[2]
@@ -295,7 +296,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
 
-    parser.add_argument('--domain', type=str, choices=['source', 'target'], required=True,
+    parser.add_argument('--domains', type=str, choices=['source', 'target', 'source_target'], required=True,
                         help="the domain of train or test")
     parser.add_argument('--repo', type=str, required=False,
                         help="the repo if data is limited to one")
@@ -304,12 +305,12 @@ def main():
     logger.info(args)
 
     data_dir = args.data_dir
-    domain = args.domain
+    domains = args.domains.split('_')
     repo = args.repo
 
     logger.info('********** arguments **********')
     logger.info(f'data_dir : {data_dir}')
-    logger.info(f'domain : {domain}')
+    logger.info(f'domains : {domains}')
     logger.info(f'repo : {repo}')
     logger.info('********** arguments **********')
 
@@ -363,7 +364,7 @@ def main():
 
     if args.do_train:
         # Prepare training data loader
-        train_examples = read_examples(data_dir, 'train', domain, repo)  # train_filename
+        train_examples = read_examples(data_dir, 'train', domains, repo)  # train_filename
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
         all_source_ids = torch.tensor([f.source_ids for f in train_features], dtype=torch.long)
         all_source_mask = torch.tensor([f.source_mask for f in train_features], dtype=torch.long)
@@ -438,7 +439,7 @@ def main():
                 if 'dev_loss' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', domain, repo)  # args.dev_filename
+                    eval_examples = read_examples(data_dir, 'val', domains, repo)  # args.dev_filename
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='dev')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
                     all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -498,7 +499,7 @@ def main():
                 if 'dev_bleu' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_bleu']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', domain, repo)  # args.dev_filename
+                    eval_examples = read_examples(data_dir, 'val', domains, repo)  # args.dev_filename
                     eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
@@ -559,8 +560,8 @@ def main():
         #     files.append(args.test_filename)
         for idx, file in enumerate(['NA']):
             logger.info("Test file: {}".format(file))
-            assert domain == 'target'
-            eval_examples = read_examples(data_dir, 'test', domain, repo)  # args.dev_filename
+            assert domains == ['target']
+            eval_examples = read_examples(data_dir, 'test', domains, repo)  # args.dev_filename
             eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
             all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
             all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -605,6 +606,11 @@ def main():
                 f.write("  %s = %s " % ("bleu-4", str(dev_bleu)))
                 f.write("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
                 f.write("  " + "*" * 20)
+            now = datetime.now()
+            dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+            # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
+            with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
+                f.write(f'normal,{args.repo if args.repo else "all"},{round(np.mean(accs) * 100, 4):.2f},{round(dev_bleu, 2):2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
 
 
 if __name__ == "__main__":
