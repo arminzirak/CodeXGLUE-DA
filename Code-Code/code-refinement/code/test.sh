@@ -13,10 +13,10 @@ source env/bin/activate
 
 python run.py \
 	--do_test \
-	--output_dir ~/scratch/Xoutputs/adapted/all/ \
-	--load_model_path ./output/checkpoint-best-ppl/pytorch_model.bin \
+	--output_dir ~/scratch/Xoutputs/train_source/best_ppl/ \
+	--load_model_path ~/scratch/Xoutputs/train_source/checkpoint-best-ppl/pytorch_model.bin \
 	--model_type roberta \
-	--model_name_or_path microsoft/codebert-base \
+	--model_name_or_path /home/arminz/codebert-base \
 	--config_name roberta-base \
 	--tokenizer_name roberta-base \
 	--data_dir 	../data/datasets/50/ \

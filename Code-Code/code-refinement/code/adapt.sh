@@ -19,11 +19,11 @@ do
     --do_eval \
     --model_type roberta \
     --model_name_or_path /home/arminz/codebert-base \
-    --load_model_path ./output/checkpoint-best-ppl/pytorch_model.bin \
+    --load_model_path ~/scratch/Xoutputs/train_source/checkpoint-best-ppl/pytorch_model.bin \
     --config_name roberta-base \
     --tokenizer_name roberta-base \
     --data_dir ../data/datasets/50/ \
-    --output_dir ~/scratch/Xoutputs/adapted/$repo \
+    --output_dir ~/scratch/Xoutputs/adapted/train_source/best_ppl/$repo \
     --max_source_length 256 \
     --max_target_length 256 \
     --beam_size 5 \

@@ -16,8 +16,8 @@ do
   echo $repo #TODO: replace codebert with roberta
   python run.py \
     --do_test \
-    --output_dir ~/scratch/Xoutputs/test/adapted/$repo\
-    --load_model_path ./output/checkpoint-best-ppl/pytorch_model.bin \
+    --output_dir ~/scratch/Xoutputs/test/adapted/train_source/best_ppl/$repo\
+    --load_model_path ~/scratch/Xoutputs/adapted/train_source/best_ppl/$repo \
     --model_type roberta \
     --model_name_or_path /home/arminz/codebert-base  \
     --config_name roberta-base \
