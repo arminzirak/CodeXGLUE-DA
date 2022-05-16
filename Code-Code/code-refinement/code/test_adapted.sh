@@ -17,7 +17,7 @@ do
   python run.py \
     --do_test \
     --output_dir ~/scratch/Xoutputs/test/adapted/train_source/best_ppl/$repo\
-    --load_model_path ~/scratch/Xoutputs/adapted/train_source/best_ppl/$repo \
+    --load_model_path ~/scratch/Xoutputs/adapted/train_source/best_ppl/$repo/checkpoint-best-ppl/pytorch_model.bin \
     --model_type roberta \
     --model_name_or_path /home/arminz/codebert-base  \
     --config_name roberta-base \
