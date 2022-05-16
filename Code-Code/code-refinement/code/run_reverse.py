@@ -59,13 +59,15 @@ class Example(object):
                  source,
                  target,
                  target_domain,
-                 split
+                 split,
+                 repo
                  ):
         self.idx = idx
         self.source = source
         self.target = target
-        self.target_domain = target_domain,
+        self.target_domain = target_domain
         self.split = split
+        self.repo = repo
 
 
 # def read_examples(filename):
@@ -124,7 +126,7 @@ class Example(object):
 #     return examples
 
 
-def read_examples_reverse(data_dir, split, domains, repo=None):
+def read_examples_reverse(data_dir, split, domains, repo):
     """Read examples from filename."""
     examples = []
     idx = 0
@@ -137,14 +139,16 @@ def read_examples_reverse(data_dir, split, domains, repo=None):
         csv_reader_fixed = csv.reader(f2, delimiter=',')
         csv_reader_splits = csv.reader(f3, delimiter=',')
         for line1, line2, line3 in zip(csv_reader_buggy, csv_reader_fixed, csv_reader_splits):
-            if repo and not (line1[3] == repo):
+            this_repo = line1[3]
+            this_split = line3[2]
+            if repo and not (this_repo == repo):
                 continue
-            if line3[2] != split:
+            if this_split != split:
                 continue
-            target_domain = (line3[1] == 'True')
-            if not ('source' in domains) and not target_domain:
+            this_target_domain = (line3[1] == 'True')
+            if not ('source' in domains) and not this_target_domain:
                 continue
-            if not ('target' in domains) and target_domain:
+            if not ('target' in domains) and this_target_domain:
                 continue
             assert line1[0] == line2[0] == line3[0]
             assert line1[2] == line2[2]
@@ -156,12 +160,13 @@ def read_examples_reverse(data_dir, split, domains, repo=None):
                     idx=line1[0],
                     source=line2[1].strip(),
                     target=line1[1].strip(),
-                    target_domain=line3[1],
-                    split=line3[2],
+                    target_domain=this_target_domain,
+                    split=this_split,
+                    repo=this_repo
                 )
             )
             idx += 1
-    logger.info('read examples (reverse) for {} {} {}: #{}'.format(split, target_domain, repo, len(examples)))
+    logger.info('read examples (reverse) for {} {} {}: #{}'.format(split, this_target_domain, repo, len(examples)))
     return examples
 
 
@@ -344,7 +349,8 @@ def main():
     # print arguments
     args = parser.parse_args()
     logger.info(args)
-
+    assert not args.do_train
+    assert args.do_test
     data_dir = args.data_dir
     domains = args.domains.split('_')
     repo = args.repo
@@ -602,8 +608,13 @@ def main():
         for idx, file in enumerate(['NA']):
             logger.info("Test file: {}".format(file))
             assert domains == ['target']
-            eval_examples = read_examples_reverse(data_dir, 'test', domains, repo)  # args.dev_filename
-            eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
+            all_examples = list()
+            train_examples = read_examples_reverse(data_dir, 'train', domains, repo)
+            val_examples = read_examples_reverse(data_dir, 'val', domains, repo)
+            all_examples += train_examples
+            all_examples += val_examples
+
+            eval_features = convert_examples_to_features(all_examples, tokenizer, args, stage='test')
             all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
             all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
             eval_data = TensorDataset(all_source_ids, all_source_mask)
@@ -629,15 +640,20 @@ def main():
             model.train()
             predictions = []
             accs = []
-            with open(os.path.join(args.output_dir, "test_{}.output".format(str(idx))), 'w') as f, open(
-                    os.path.join(args.output_dir, "test_{}.gold".format(str(idx))), 'w') as f1:
-                for ref, gold in zip(p, eval_examples):
+            with open(os.path.join(args.output_dir, "augmented_data.output"), 'w') as f, \
+                    open(os.path.join(args.output_dir, "real_data.gold"), 'w') as f1, \
+                    open(os.path.join(args.output_dir, "augmented_data.input"), 'w') as f2, \
+                    open(os.path.join(args.output_dir, "augmented_data.splits"), 'w') as f3:
+                for ref, gold in zip(p, all_examples):
                     predictions.append(str(gold.idx) + '\t' + ref)
                     f.write(ref + '\n')
                     f1.write(gold.target + '\n')
+                    f2.write(gold.source + '\n')
+                    f3.write(gold.repo + ',' + str(gold.target_domain) + ',' + gold.split + '\n')
                     accs.append(ref == gold.target)
-            dev_bleu = round(_bleu(os.path.join(args.output_dir, "test_{}.gold".format(str(idx))).format(file),
-                                   os.path.join(args.output_dir, "test_{}.output".format(str(idx))).format(file)), 2)
+
+            dev_bleu = round(_bleu(os.path.join(args.output_dir, "real_data.gold").format(file),
+                                   os.path.join(args.output_dir, "augmented_data.output").format(file)), 2)
 
             logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
             logger.info("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
@@ -646,12 +662,13 @@ def main():
             with open(os.path.join(args.output_dir, "test_{}.result".format(str(idx))), 'a') as f:
                 f.write("  %s = %s " % ("bleu-4", str(dev_bleu)))
                 f.write("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
+                f.write("  %s = %s " % ("samples", str(len(accs))))
                 f.write("  " + "*" * 20)
             now = datetime.now()
             dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
             # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
             with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
-                f.write(f'normal,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
+                f.write(f'reverse,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
 
 
 if __name__ == "__main__":

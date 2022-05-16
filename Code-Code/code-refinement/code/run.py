@@ -59,13 +59,15 @@ class Example(object):
                  source,
                  target,
                  target_domain,
-                 split
+                 split,
+                 repo
                  ):
         self.idx = idx
         self.source = source
         self.target = target
         self.target_domain = target_domain,
         self.split = split
+        self.repo = repo
 
 
 # def read_examples(filename):
@@ -117,10 +119,43 @@ def read_examples(data_dir, split, domains, repo=None):
                     target=line2[1].strip(),
                     target_domain=line3[1],
                     split=line3[2],
+                    repo=repo
                 )
             )
             idx += 1
     logger.info('read examples for {} {} {}: #{}'.format(split, target_domain, repo, len(examples)))
+    return examples
+
+
+def read_examples_augmented_data(augmented_data_dir, repo, split):
+    """Read examples from filename."""
+    examples = []
+    idx = 0
+    buggy_filename = augmented_data_dir + 'augmented_data.output'
+    fixed_filename = augmented_data_dir + 'augmented_data.input'
+    split_filename = augmented_data_dir + 'augmented_data.splits'
+
+    with open(buggy_filename) as f_buggy, open(fixed_filename) as f_fixed, open(split_filename) as f_split:
+        for line1, line2, line3 in zip(f_buggy, f_fixed, f_split):
+            this_repo, target_domain, this_split = line3.strip().split(',')
+            assert target_domain == 'True'
+            assert line2[0] == line1[0]
+            if this_repo != repo:
+                continue
+            if split != this_split:
+                continue
+            examples.append(
+                Example(
+                    idx=line1[0],
+                    source=line1[1].strip(),
+                    target=line2[1].strip(),
+                    target_domain=target_domain,
+                    repo=this_repo,
+                    split=this_split
+                )
+            )
+            idx += 1
+    logger.info('read examples augmented data for {} {}: #{}'.format(repo, 'target', len(examples)))
     return examples
 
 
@@ -300,6 +335,8 @@ def main():
                         help="the domain of train or test")
     parser.add_argument('--repo', type=str, required=False,
                         help="the repo if data is limited to one")
+    parser.add_argument("--augmented_data", action='store_true',
+                        help="Whether to use augmented data or original data.")
     # print arguments
     args = parser.parse_args()
     logger.info(args)
@@ -307,12 +344,19 @@ def main():
     data_dir = args.data_dir
     domains = args.domains.split('_')
     repo = args.repo
+    augmented_data = args.augmented_data
 
     logger.info('********** arguments **********')
     logger.info(f'data_dir : {data_dir}')
     logger.info(f'domains : {domains}')
     logger.info(f'repo : {repo}')
+    logger.info(f'augmented data : {augmented_data}')
     logger.info('********** arguments **********')
+
+    if augmented_data:
+        assert args.do_train
+        assert not args.do_test
+
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
@@ -364,7 +408,10 @@ def main():
 
     if args.do_train:
         # Prepare training data loader
-        train_examples = read_examples(data_dir, 'train', domains, repo)  # train_filename
+        if augmented_data:
+            train_examples = read_examples_augmented_data(data_dir, repo, 'train')  # train_filename
+        else:
+            train_examples = read_examples(data_dir, 'train', domains, repo)  # train_filename
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
         all_source_ids = torch.tensor([f.source_ids for f in train_features], dtype=torch.long)
         all_source_mask = torch.tensor([f.source_mask for f in train_features], dtype=torch.long)
@@ -439,7 +486,10 @@ def main():
                 if 'dev_loss' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', domains, repo)  # args.dev_filename
+                    if augmented_data:
+                        eval_examples = read_examples_augmented_data(data_dir, repo, 'val')  # train_filename
+                    else:
+                        eval_examples = read_examples(data_dir, 'val', domains, repo)
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='dev')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
                     all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -499,7 +549,11 @@ def main():
                 if 'dev_bleu' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_bleu']
                 else:
-                    eval_examples = read_examples(data_dir, 'val', domains, repo)  # args.dev_filename
+                    if augmented_data:
+                        eval_examples = read_examples_augmented_data(data_dir, repo, 'val')
+                    else:
+                        eval_examples = read_examples(data_dir, 'val', domains, repo)
+                    # eval_examples = read_examples(data_dir, 'val', domains, repo)  # args.dev_filename
                     eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
@@ -561,7 +615,8 @@ def main():
         for idx, file in enumerate(['NA']):
             logger.info("Test file: {}".format(file))
             assert domains == ['target']
-            eval_examples = read_examples(data_dir, 'test', domains, repo)  # args.dev_filename
+            assert not augmented_data
+            eval_examples = read_examples(data_dir, 'test', domains, repo)  # args.dev_filename #TODO: add eval data
             eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
             all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
             all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -610,7 +665,8 @@ def main():
             dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
             # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
             with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
-                f.write(f'normal,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
+                f.write(
+                    f'normal,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
 
 
 if __name__ == "__main__":
