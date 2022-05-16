@@ -1,0 +1,3 @@
+Xruns ; full run with old design on small dataset ; (train) metrics: 78.86 bleu-4 | 15.9 xMatch; Xoutputs/old_design/
+XTss ; full run just on source data ; (train) metrics : 80.06 blue | 19.4 exact match ; Xoutputs/train_source ; (test) metrics 77.54 blue | 7.38 Xmatch
+XtrSI ;  full run on both source and target ; (train) metrics : 80.64 blue | 20.8 exact match ; Xoutputs/train_included ; (test) metrics 83.36 | 26.85 Xmatch
