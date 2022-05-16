@@ -610,7 +610,7 @@ def main():
             dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
             # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
             with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
-                f.write(f'normal,{args.repo if args.repo else "all"},{round(np.mean(accs) * 100, 4):.2f},{round(dev_bleu, 2):2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
+                f.write(f'normal,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
 
 
 if __name__ == "__main__":
