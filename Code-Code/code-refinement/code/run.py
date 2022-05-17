@@ -147,8 +147,8 @@ def read_examples_augmented_data(augmented_data_dir, repo, split):
             examples.append(
                 Example(
                     idx=line1[0],
-                    source=line1[1].strip(),
-                    target=line2[1].strip(),
+                    source=line1.strip(),
+                    target=line2.strip(),
                     target_domain=target_domain,
                     repo=this_repo,
                     split=this_split
