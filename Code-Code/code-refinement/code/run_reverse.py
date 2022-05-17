@@ -649,7 +649,7 @@ def main():
                     f.write(ref + '\n')
                     f1.write(gold.target + '\n')
                     f2.write(gold.source + '\n')
-                    f3.write(gold.repo + ',' + str(gold.target_domain) + ',' + gold.split + '\n')
+                    f3.write(gold.repo + ',' + str(gold.target_domain) + ',' + gold.split + ',' + str(ref == gold.target) + '\n')
                     accs.append(ref == gold.target)
 
             dev_bleu = round(_bleu(os.path.join(args.output_dir, "real_data.gold").format(file),
@@ -658,17 +658,21 @@ def main():
             logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
             logger.info("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
             logger.info("  " + "*" * 20)
-
+            now = datetime.now()
+            dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
             with open(os.path.join(args.output_dir, "test_{}.result".format(str(idx))), 'a') as f:
+                f.write(f'{dt_string} \n')
                 f.write("  %s = %s " % ("bleu-4", str(dev_bleu)))
                 f.write("  %s = %s " % ("xMatch", str(round(np.mean(accs) * 100, 4))))
                 f.write("  %s = %s " % ("samples", str(len(accs))))
                 f.write("  " + "*" * 20)
-            now = datetime.now()
-            dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+                f.write(f'\n')
+
+
             # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
             with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
-                f.write(f'reverse,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
+                f.write(f'reverse,{args.repo if args.repo else "all"},{np.mean(accs):.4f},{dev_bleu:.2f},'
+                        f'{len(predictions)},{dt_string},{args.load_model_path},{args.learning_rate},{args.train_steps},{args.eval_steps},{args.data_dir}\n')
 
 
 if __name__ == "__main__":

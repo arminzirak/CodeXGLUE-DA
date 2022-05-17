@@ -137,9 +137,11 @@ def read_examples_augmented_data(augmented_data_dir, repo, split):
 
     with open(buggy_filename) as f_buggy, open(fixed_filename) as f_fixed, open(split_filename) as f_split:
         for line1, line2, line3 in zip(f_buggy, f_fixed, f_split):
-            this_repo, target_domain, this_split = line3.strip().split(',')
+            this_repo, target_domain, this_split, this_correct = line3.strip().split(',')
+            # if this_correct == 'False':
+            #     continue
             assert target_domain == 'True'
-            assert line2[0] == line1[0]
+            # assert line2[0] == line1[0]
             if this_repo != repo:
                 continue
             if split != this_split:
@@ -605,7 +607,13 @@ def main():
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
                     output_model_file = os.path.join(output_dir, "pytorch_model.bin")
                     torch.save(model_to_save.state_dict(), output_model_file)
-
+        if args.do_eval:
+            now = datetime.now()
+            dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+            # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
+            with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
+                f.write(
+                    f'train,{args.repo if args.repo else "all"},{np.mean(accs):.4f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path},{args.train_steps},{args.eval_steps},{args.learning_rate},{args.data_dir}\n')
     if args.do_test:
         # files = []
         # if args.dev_filename is not None:
@@ -666,7 +674,7 @@ def main():
             # print(os.path.join(args.output_dir, "test_{}.result".format(str(idx))))
             with open(os.path.join(os.path.expanduser('~'), './scratch/Xoutputs/Xresults.csv'), 'a') as f:
                 f.write(
-                    f'normal,{args.repo if args.repo else "all"},{np.mean(accs) * 100:.2f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path}\n')
+                    f'normal,{args.repo if args.repo else "all"},{np.mean(accs):.4f},{dev_bleu:.2f},{len(predictions)},{dt_string},{args.load_model_path},{args.data_dir}\n')
 
 
 if __name__ == "__main__":
