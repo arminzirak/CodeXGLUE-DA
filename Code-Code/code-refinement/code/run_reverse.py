@@ -349,8 +349,11 @@ def main():
     # print arguments
     args = parser.parse_args()
     logger.info(args)
-    assert not args.do_train
-    assert args.do_test
+    if args.do_train:
+        assert args.domains == 'source'
+    if args.do_test:
+        assert args.domains == 'target'
+
     data_dir = args.data_dir
     domains = args.domains.split('_')
     repo = args.repo

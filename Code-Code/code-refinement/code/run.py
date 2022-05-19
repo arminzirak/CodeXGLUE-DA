@@ -123,7 +123,7 @@ def read_examples(data_dir, split, domains, repo=None):
                 )
             )
             idx += 1
-    logger.info('read examples for {} {} {}: #{}'.format(split, target_domain, repo, len(examples)))
+    logger.info('read examples for {} {} {}: #{}'.format(split, domains, repo, len(examples)))
     return examples
 
 
