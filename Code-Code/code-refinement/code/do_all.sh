@@ -11,6 +11,6 @@
 cd /home/arminz/CodeXGLUE-DA/Code-Code/code-refinement/code
 source env/bin/activate
 
-bash adapt_augmented.sh
+bash adapt.sh
 echo "adaptation finished"
 bash test_adapted.sh
