@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --gres=gpu:v100l:1
-#SBATCH --job-name=XtestAM # single job name for the array
+#SBATCH --job-name=XRtestAM # single job name for the array
 #SBATCH --time=4:00:00 # maximum walltime per job
 #SBATCH --mem=25G # maximum 100M per job
 #SBATCH --cpus-per-task=2
@@ -16,8 +16,8 @@ do
   echo $repo
   python run.py \
     --do_test \
-    --output_dir ~/scratch/Xoutputs/50-100/test/adapted/train_source/best_ppl/$repo\
-    --load_model_path ~/scratch/Xoutputs/50-100/adapted/train_source/best_ppl/$repo/checkpoint-best-ppl/pytorch_model.bin \
+    --output_dir ~/scratch/Xoutputs/50-100/test/adapted/reverse/train_source/best_ppl/$repo\
+    --load_model_path ~/scratch/Xoutputs/50-100/adapted/reverse/train_source/best_ppl/$repo/checkpoint-best-ppl/pytorch_model.bin \
     --model_type roberta \
     --model_name_or_path /home/arminz/codebert-base  \
     --config_name roberta-base \
