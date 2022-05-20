@@ -14,7 +14,7 @@ source env/bin/activate
 python run_reverse.py \
 	--do_test \
 	--output_dir ~/scratch/Xoutputs/50-100/reverse/inference_target/best_ppl/ \
-	--load_model_path /home/armin/scratch/Xoutputs/50-100/reverse/train_source/checkpoint-best-ppl/pytorch_model.bin \
+	--load_model_path /home/arminz/scratch/Xoutputs/50-100/reverse/train_source/checkpoint-best-ppl/pytorch_model.bin \
 	--model_type roberta \
 	--model_name_or_path /home/arminz/codebert-base \
 	--config_name roberta-base \
