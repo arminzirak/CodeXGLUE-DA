@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --gres=gpu:v100l:1
-#SBATCH --job-name=XtestS # single job name for the array
+#SBATCH --job-name=XtestIS # single job name for the array
 #SBATCH --time=4:00:00 # maximum walltime per job
 #SBATCH --mem=25G # maximum 100M per job
 #SBATCH --cpus-per-task=2
@@ -13,8 +13,8 @@ source env/bin/activate
 
 python run.py \
 	--do_test \
-	--output_dir ~/scratch/Xoutputs/train_source/best_ppl/ \
-	--load_model_path ~/scratch/Xoutputs/train_source/checkpoint-best-ppl/pytorch_model.bin \
+	--output_dir ~/scratch/Xoutputs/train_included/best_ppl/ \
+	--load_model_path ~/scratch/Xoutputs/train_included/checkpoint-best-ppl/pytorch_model.bin \
 	--model_type roberta \
 	--model_name_or_path /home/arminz/codebert-base \
 	--config_name roberta-base \
@@ -31,8 +31,8 @@ for repo in https://api.github.com/repos/pjreiniger/snobot2015 https://api.githu
 do
   python run.py \
 	--do_test \
-	--output_dir ~/scratch/Xoutputs/train_source/best_ppl/ \
-	--load_model_path ~/scratch/Xoutputs/train_source/checkpoint-best-ppl/pytorch_model.bin \
+	--output_dir ~/scratch/Xoutputs/train_included/best_ppl/ \
+	--load_model_path ~/scratch/Xoutputs/train_included/checkpoint-best-ppl/pytorch_model.bin \
 	--model_type roberta \
 	--model_name_or_path /home/arminz/codebert-base \
 	--config_name roberta-base \
@@ -43,5 +43,5 @@ do
 	--beam_size 5 \
 	--eval_batch_size 32 \
 	--domains target \
-  --repo $repo
+	--repo $repo
 done
