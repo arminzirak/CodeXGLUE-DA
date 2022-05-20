@@ -19,7 +19,7 @@ do
     --do_eval \
     --model_type roberta \
     --model_name_or_path /home/arminz/codebert-base \
-    --load_model_path ~/scratch/Xoutputs/50-100/train_source/checkpoint-best-ppl/pytorch_model.bin \
+    --load_model_path ~/scratch/Xoutputs/50-100/reverse/train_source/checkpoint-best-ppl/pytorch_model.bin \
     --config_name roberta-base \
     --tokenizer_name roberta-base \
     --data_dir ~/scratch/Xoutputs/50-100/reverse/inference_target/best_ppl/ \
