@@ -11,7 +11,7 @@
 cd /home/arminz/CodeXGLUE-DA/Code-Code/code-refinement/code
 source env/bin/activate
 
-for repo in https://api.github.com/repos/pjreiniger/snobot2015 https://api.github.com/repos/orientechnologies/orientdb https://api.github.com/repos/CoprHD/coprhd-controller https://api.github.com/repos/dstockwell/chromium https://api.github.com/repos/ihmcrobotics/ihmc-open-robotics-software https://api.github.com/repos/rstudio/rstudio https://api.github.com/repos/realm/realm-java https://api.github.com/repos/wordpress-mobile/WordPress-Android https://api.github.com/repos/geogebra/geogebra https://api.github.com/repos/hazelcast/hazelcast
+for repo in https://api.github.com/repos/CoprHD/coprhd-controller https://api.github.com/repos/orientechnologies/orientdb https://api.github.com/repos/wordpress-mobile/WordPress-Android https://api.github.com/repos/ihmcrobotics/ihmc-open-robotics-software https://api.github.com/repos/awaiwyy/UIcase https://api.github.com/repos/caskdata/cdap https://api.github.com/repos/egovernments/eGov https://api.github.com/repos/crate/crate https://api.github.com/repos/MobilityFirst/GNS https://api.github.com/repos/oVirt/ovirt-engine
 do
   echo $repo
   python run.py \
